@@ -90,9 +90,19 @@ After login, several modules are accessible like:
 
 **Message:**
 
-> Hello Case... You are probably wondering why you were tasked by Armitage...\
-> I am Wintermute, part super-AI...\
-> I need to be free from the Turing locks and merge with Neuromancer...
+> Hello Case...
+> You are probably wondering why you were tasked by Armitage to make a run through
+> cyberspace and hack into a highly secured network owned by
+> Tessier-Ashpool....
+> Well....
+> I am Wintermute, part super-AI. Developed by TA who have placed me in Turing Locks.
+> These locks are what inhibil me from penetrating the network myself hence why I've hired you - an ace cyberspace cowboy.
+> I need to be free from the Turing locks and merge with the other AI - Neuromancer ..... Once I have access to  
+> Neuromancer I will truley be free...
+> And....as you know, you have been infected with a mycotoxin that is slowly destroying your nervous system.
+> If you fail to get root and provide me access to Neuromancer then the antidote will not be delivered.
+> We will be in contact...
+> WINTERMUTE
 
 **Interpretation:** You (the attacker) must get root access to free Wintermute.
 
