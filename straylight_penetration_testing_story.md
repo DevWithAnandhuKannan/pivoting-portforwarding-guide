@@ -28,7 +28,7 @@ This beginner-friendly report explains each step of a penetration test in a stor
 
 - `-A` enables aggressive scanning (OS detection, version, traceroute, scripts)
 
-
+![Image One](1.png)
 
 **Discovered Ports:**
 
